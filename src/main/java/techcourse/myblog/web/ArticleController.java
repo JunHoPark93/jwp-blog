@@ -4,62 +4,61 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import techcourse.myblog.domain.Article;
-import techcourse.myblog.domain.User;
 import techcourse.myblog.service.ArticleService;
-import techcourse.myblog.service.CommentService;
 import techcourse.myblog.service.dto.ArticleRequest;
 
 import javax.validation.Valid;
 
 @Controller
-@RequestMapping("/articles")
 public class ArticleController {
     private ArticleService articleService;
-    private CommentService commentService;
 
-    public ArticleController(ArticleService articleService, CommentService commentService) {
+    public ArticleController(ArticleService articleService) {
         this.articleService = articleService;
-        this.commentService = commentService;
     }
 
-    @GetMapping()
+    @GetMapping("/")
+    public String index(Model model) {
+        model.addAttribute("articles", articleService.findAll());
+        return "index";
+    }
+
+    @GetMapping("/writing")
     public String formArticle(Model model) {
         model.addAttribute("article", null);
         return "article-edit";
     }
 
-    @PostMapping()
-    public String saveArticle(@Valid ArticleRequest articleRequest, Model model, User user) {
-        Article article = articleService.save(articleRequest, user);
+    @PostMapping("/articles")
+    public String saveArticle(@Valid ArticleRequest articleRequest, Model model) {
+        Article article = articleService.save(articleRequest);
         model.addAttribute("article", article);
         return "redirect:/articles/" + article.getId();
     }
 
-    @GetMapping("/{articleId}")
+    @GetMapping("/articles/{articleId}")
     public String selectArticle(@PathVariable("articleId") long articleId, Model model) {
-        Article article = articleService.findById(articleId);
-        model.addAttribute("article", article);
-        model.addAttribute("comments", commentService.findByArticle(article));
+        model.addAttribute("article", articleService.findById(articleId));
         return "article";
     }
 
-    @GetMapping("/{articleId}/edit")
-    public String edit(@PathVariable("articleId") long articleId, Model model, User user) {
-        Article article = articleService.findByIdWithUser(articleId, user);
+    @GetMapping("/articles/{articleId}/edit")
+    public String edit(@PathVariable("articleId") long articleId, Model model) {
+        Article article = articleService.findById(articleId);
         model.addAttribute("article", article);
         return "article-edit";
     }
 
-    @PutMapping("/{articleId}")
-    public String editArticle(@PathVariable("articleId") long articleId, @ModelAttribute ArticleRequest articleRequest, User user, Model model) {
-        Article article = articleService.editArticle(articleRequest, articleId, user);
+    @PutMapping("/articles/{articleId}")
+    public String editArticle(@PathVariable("articleId") long articleId, @ModelAttribute ArticleRequest articleRequest, Model model) {
+        Article article = articleService.editArticle(articleRequest, articleId);
         model.addAttribute("article", article);
-        return "redirect:/articles/" + articleId;
+        return "article";
     }
 
-    @DeleteMapping("/{articleId}")
-    public String deleteArticle(@PathVariable("articleId") long articleId, User user) {
-        articleService.deleteById(articleId, user);
+    @DeleteMapping("/articles/{articleId}")
+    public String deleteArticle(@PathVariable("articleId") long articleId) {
+        articleService.deleteById(articleId);
         return "redirect:/";
     }
 }

@@ -5,25 +5,20 @@ import techcourse.myblog.domain.User;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 public class AuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (isSignUpRequest(request)) {
+        if (request.getRequestURI().equals("/users") && request.getMethod().equals("POST")) {
             return true;
         }
 
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
+        User userSession = (User) request.getSession().getAttribute("user");
+
+        if (userSession == null) {
             response.sendRedirect("/login");
             return false;
         }
         return true;
-    }
-
-    private boolean isSignUpRequest(HttpServletRequest request) {
-        return request.getRequestURI().equals("/users") && request.getMethod().equals("POST");
     }
 }

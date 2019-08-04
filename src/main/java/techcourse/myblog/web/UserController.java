@@ -9,9 +9,12 @@ import techcourse.myblog.service.UserService;
 import techcourse.myblog.service.dto.UserEditRequest;
 import techcourse.myblog.service.dto.UserLoginRequest;
 import techcourse.myblog.service.dto.UserRequest;
+import techcourse.myblog.service.dto.UserResponse;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 public class UserController {
@@ -47,13 +50,17 @@ public class UserController {
 
     @GetMapping("/users")
     public String showUsers(Model model) {
-        model.addAttribute("users", userService.findAll());
+        List<UserResponse> users = new ArrayList<>();
+        for (User user : userService.findAll()) {
+            users.add(new UserResponse(user.getName(), user.getEmail()));
+        }
+        model.addAttribute("users", users);
         return "user-list";
     }
 
     @GetMapping("/mypage")
-    public String myPageForm(Model model, User user) {
-        model.addAttribute(USER, user);
+    public String myPageForm(Model model, HttpServletRequest request) {
+        model.addAttribute(USER, request.getSession().getAttribute(USER));
         return "mypage";
     }
 
@@ -78,7 +85,7 @@ public class UserController {
     @PutMapping("/users/{userId}")
     public String editUser(@PathVariable("userId") Long userId, HttpServletRequest request, @Valid UserEditRequest userEditRequest, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            return "mypage-edit";
+            return "/mypage-edit";
         }
         User user = userService.editUserName(userId, userEditRequest.getName());
         request.getSession().setAttribute(USER, user);

@@ -13,22 +13,23 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.web.reactive.function.BodyInserters.fromFormData;
-import static techcourse.myblog.web.WebTestHelper.loginForm;
-import static techcourse.myblog.web.WebTestHelper.signUpForm;
 
 @AutoConfigureWebTestClient
 @ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-public class UserControllerTest {
+public class UserControllerTests {
     @Autowired
     private WebTestClient webTestClient;
 
     @BeforeEach
     void setUp() {
         webTestClient.post().uri("/users")
-                .body(signUpForm("CU", "love@gmail.com", "PassWord!1"))
+                .body(fromFormData("name", "Bob")
+                        .with("email", "test@gmail.com")
+                        .with("password", "PassWord1!")
+                        .with("reconfirmPassword", "PassWord1!"))
                 .exchange()
                 .expectStatus()
                 .isFound()
@@ -36,7 +37,7 @@ public class UserControllerTest {
     }
 
     @Test
-    void 로그인_페이지() {
+    void loginForm() {
         webTestClient.get().uri("/login")
                 .exchange()
                 .expectStatus().isOk()
@@ -44,7 +45,7 @@ public class UserControllerTest {
     }
 
     @Test
-    void 회원가입_페이지() {
+    void signUpForm() {
         webTestClient.get().uri("/signup")
                 .exchange()
                 .expectStatus().isOk()
@@ -55,7 +56,7 @@ public class UserControllerTest {
     void 유저_동일한_email() {
         webTestClient.post().uri("/users")
                 .body(fromFormData("name", "Alice")
-                        .with("email", "love@gmail.com")
+                        .with("email", "test@gmail.com")
                         .with("password", "PassWord1!")
                         .with("reconfirmPassword", "PassWord1!"))
                 .exchange()
@@ -72,7 +73,9 @@ public class UserControllerTest {
     @Test
     void 로그인후_메인화면() {
         webTestClient.post().uri("/login")
-                .body(loginForm("love@gmail.com", "PassWord!1"))
+                .body(fromFormData("email", "test@gmail.com")
+                        .with("password", "PassWord1!")
+                        .with("reconfirmPassword", "PassWord1!"))
                 .exchange()
                 .expectStatus().is3xxRedirection()
         ;
@@ -81,7 +84,9 @@ public class UserControllerTest {
     @Test
     void 로그인실패_이메일이_없는_경우() {
         webTestClient.post().uri("/login")
-                .body(loginForm("nothing@gmail.com", "PassWord!1"))
+                .body(fromFormData("email", "nothing@gmail.com")
+                        .with("password", "PassWord1!")
+                        .with("reconfirmPassword", "PassWord1!"))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -96,7 +101,9 @@ public class UserControllerTest {
     @Test
     void 로그인실패_비밀번호가_틀린_경우() {
         webTestClient.post().uri("/login")
-                .body(loginForm("love@gmail.com", "WrongPassWord!1"))
+                .body(fromFormData("email", "test@gmail.com")
+                        .with("password", "PassWord1!!")
+                        .with("reconfirmPassword", "PassWord1!"))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -174,20 +181,10 @@ public class UserControllerTest {
         ;
     }
 
-    @Test
-    void 로그인후_userlist_페이지_접근() {
-        String cookie = getCookie();
-
-        webTestClient.get().uri("/users")
-                .header("Cookie", cookie)
-                .exchange()
-                .expectStatus().isOk()
-        ;
-    }
-
     private String getCookie() {
         return webTestClient.post().uri("/login")
-                .body(loginForm("love@gmail.com", "PassWord!1"))
+                .body(fromFormData("email", "test@gmail.com")
+                        .with("password", "PassWord1!"))
                 .exchange()
                 .expectStatus()
                 .isFound()
